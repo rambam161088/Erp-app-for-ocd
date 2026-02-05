@@ -4,16 +4,37 @@ import time
 from datetime import datetime
 
 # --- הגדרות עיצוב ומדע ---
-st.set_page_config(page_title="OCD ERP Tool - ILT Model", layout="centered")
+st.set_page_config(page_title="ERP Coach Pro", layout="centered")
 
-# עיצוב מותאם למובייל (RTL)
+# עיצוב מותאם למובייל (RTL) + הדגשת התסריט
 st.markdown("""
     <style>
     body {direction: rtl; text-align: right; font-family: -apple-system, BlinkMacSystemFont, sans-serif;}
     .stTextInput, .stTextArea, .stSelectbox, .stSlider {direction: rtl;}
     div.stButton > button:first-child {background-color: #007AFF; color: white; border-radius: 12px; height: 50px; font-size: 18px;}
-    .script-card {background-color: #F2F2F7; padding: 20px; border-radius: 15px; border-right: 6px solid #FF3B30; margin-bottom: 20px;}
-    .scientific-note {font-size: 12px; color: gray; margin-top: -10px; margin-bottom: 10px;}
+    
+    /* עיצוב בולט לתסריט בזמן חשיפה */
+    .exposure-script {
+        background-color: #fff9c4; /* צהוב בהיר */
+        color: #333;
+        padding: 25px;
+        border-radius: 10px;
+        border-right: 8px solid #fbc02d;
+        font-size: 20px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .feedback-box {
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+    .feedback-error { background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+    .feedback-success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    
     </style>
     """, unsafe_allow_html=True)
 
@@ -21,90 +42,145 @@ st.markdown("""
 if 'scripts' not in st.session_state: st.session_state.scripts = []
 if 'logs' not in st.session_state: st.session_state.logs = []
 
-# --- לוגיקה מדעית: הפרת ציפיות ---
-def calculate_learning(prediction, reality):
-    gap = prediction - reality
-    if gap > 0: return "✨ התרחשה למידה מעכבת: הציפייה הייתה גרועה מהמציאות."
-    return "⚠️ שים לב: המוח עדיין נצמד לציפייה המפחידה."
+# --- אלגוריתם בקרת איכות ל-ERP ---
+def analyze_script_quality(text):
+    warnings = []
+    tips = []
+    
+    # בדיקת מילות הרגעה (Reassurance) - אסור!
+    forbidden_words = ["אבל", "לפחות", "יהיה בסדר", "סך הכל", "רק מחשבה", "לא באמת"]
+    for word in forbidden_words:
+        if word in text:
+            warnings.append(f"⚠️ זוהתה המילה **'{word}'**. ב-ERP אנחנו נמנעים ממילות ביטול או הרגעה. מחק אותה.")
+
+    # בדיקת מילות אי-ודאות (Uncertainty) - חובה!
+    required_words = ["אולי", "יכול להיות", "יתכן", "לא אדע", "סיכוי", "ספק"]
+    if not any(word in text for word in required_words):
+        warnings.append("⚠️ התסריט חסר מרכיב של **חוסר ודאות**. הוסף מילים כמו: 'אולי', 'יכול להיות', 'ייתכן שזה נכון'.")
+
+    # משוב חיובי
+    if not warnings:
+        tips.append("✅ התסריט מנוסח היטב: הוא מתעמת עם הפחד ללא הרגעה.")
+    
+    return warnings, tips
 
 # --- תפריט ראשי ---
-st.title("🛡️ ERP Inhibitory Tool")
-st.caption("כלי קליני לחשיפה ומניעת תגובה | מבוסס מחקר ILT")
+st.title("🛡️ ERP Coach Pro")
+st.caption("מערכת חכמה לניהול חשיפה ומניעת תגובה")
 
-mode = st.selectbox("בחר מצב עבודה:", ["📝 יצירת תסריט חשיפה", "⏱️ ביצוע חשיפה (בזמן אמת)", "📊 יומן מעקב ומסקנות"])
+mode = st.selectbox("בחר מצב עבודה:", ["📝 יצירת תסריט חשיפה", "⏱️ חדר חשיפה (בזמן אמת)", "📊 יומן מעקב"])
 
-# --- מצב 1: יצירת תסריט ---
+# --- מצב 1: יצירת תסריט + מנוע המלצות ---
 if mode == "📝 יצירת תסריט חשיפה":
-    st.subheader("בניית תסריט מבוסס חוסר ודאות")
-    st.markdown("על פי מודל ה-ERP, המטרה היא לא להרגיע, אלא לייצר תסריט שמעורר את 'הספק המקסימלי'.")
+    st.subheader("בניית תסריט חדש")
     
     with st.form("new_script"):
-        title = st.text_input("שם התסריט (למשל: 'היא שותקת בסלון')")
-        trigger = st.text_area("הטריגר (המציאות האובייקטיבית)")
-        catastrophe = st.text_area("הקטסטרופה (מה ה-OCD טוען שיקרה?)")
-        response_prevention = st.text_area("מניעת התגובה (מה אסור לי לעשות?)", value="לא לבדוק, לא לשאול, לא לנתח בראש.")
-        
-        submitted = st.form_submit_button("שמור תסריט למאגר")
-        if submitted and title:
-            script_content = f"""
-            **המצב:** {trigger}
-            **הפחד:** {catastrophe}
-            ---
-            **הצהרת חשיפה:**
-            "זה נכון ש-{trigger}, ויכול להיות שזה אומר ש-{catastrophe}.
-            אני מוכן להישאר עם האימה הזו ולא לדעת את האמת.
-            אני בוחר שלא: {response_prevention}."
-            """
-            st.session_state.scripts.append({"title": title, "content": script_content, "prevention": response_prevention})
-            st.success("התסריט נשמר.")
-
-# --- מצב 2: חדר חשיפה ---
-elif mode == "⏱️ ביצוע חשיפה (בזמן אמת)":
-    if not st.session_state.scripts:
-        st.warning("יש ליצור תסריט תחילה.")
-    else:
-        script = st.selectbox("בחר תסריט:", st.session_state.scripts, format_func=lambda x: x['title'])
-        
-        st.markdown("### שלב 1: ניבוי החרדה (Expectancy)")
-        st.markdown("<p class='scientific-note'>מודל ILT: עלינו לבדוק עד כמה אתה מצפה שהתוצאה תהיה בלתי נסבלת.</p>", unsafe_allow_html=True)
-        predicted_distress = st.slider("עד כמה זה יהיה נורא/בלתי נסבל? (0-100)", 0, 100, 80)
+        title = st.text_input("שם התסריט (למשל: 'הודעות בוואטסאפ')")
         
         st.markdown("---")
-        st.markdown(f"<div class='script-card'>{script['content']}</div>", unsafe_allow_html=True)
+        st.markdown("### 1. כתיבת התסריט הגולמי")
+        st.info("כתוב כאן את התרחיש המפחיד ביותר. זכור: אל תנסה לפתור אותו.")
+        
+        full_text = st.text_area("התסריט המלא (מה הטריגר ומה אני מפחד שקורה?):", height=150, 
+                                 placeholder="למשל: היא לא עונה לי כבר שעתיים. יכול להיות שהיא בדיוק כותבת לי הודעת פרידה...")
+        
+        prevention = st.text_input("מניעת תגובה (מה אסור לי לעשות?):", value="לא לבדוק, לא לשאול, לא לנתח בראש.")
+        
+        # --- בדיקה בזמן אמת ---
+        warnings, tips = analyze_script_quality(full_text)
+        
+        if full_text:
+            st.markdown("---")
+            st.markdown("### 🤖 ניתוח קליני אוטומטי (ERP Check)")
+            for w in warnings:
+                st.markdown(f'<div class="feedback-box feedback-error">{w}</div>', unsafe_allow_html=True)
+            for t in tips:
+                st.markdown(f'<div class="feedback-box feedback-success">{t}</div>', unsafe_allow_html=True)
+        
+        st.markdown("---")
+        submitted = st.form_submit_button("שמור תסריט למאגר")
+        
+        if submitted:
+            if title and full_text:
+                if warnings:
+                    st.error("התסריט מכיל בעיות (ראה למעלה). מומלץ לתקן לפני השמירה, אך נשמר בכל זאת.")
+                
+                st.session_state.scripts.append({
+                    "title": title, 
+                    "content": full_text, 
+                    "prevention": prevention
+                })
+                st.success("התסריט נשמר בהצלחה.")
+            else:
+                st.error("יש למלא כותרת ותוכן.")
+
+# --- מצב 2: חדר חשיפה (עם תצוגה מלאה) ---
+elif mode == "⏱️ חדר חשיפה (בזמן אמת)":
+    if not st.session_state.scripts:
+        st.warning("אין תסריטים. עבור ללשונית היצירה.")
+    else:
+        script = st.selectbox("בחר תסריט לתרגול:", st.session_state.scripts, format_func=lambda x: x['title'])
+        
+        st.markdown("### שלב 1: לפני החשיפה")
+        predicted_distress = st.slider("עד כמה אתה חושב שזה יהיה נורא? (0-10)", 0, 10, 8)
+        
+        st.markdown("---")
+        st.markdown("### התסריט שלך:")
+        # כאן השינוי - הצגת התסריט בצורה בולטת וקבועה
+        st.markdown(f"<div class='exposure-script'>{script['content']}</div>", unsafe_allow_html=True)
+        
+        st.error(f"🛑 **חוקי מניעת תגובה:** {script['prevention']}")
         
         exposure_time = st.selectbox("זמן חשיפה בדקות:", [5, 10, 15, 20])
         
-        if st.button("התחל טיימר חשיפה"):
+        if st.button("התחל טיימר"):
             progress_bar = st.progress(0)
             status = st.empty()
-            for i in range(exposure_time * 60):
-                progress_bar.progress((i + 1) / (exposure_time * 60))
-                status.markdown(f"**זמן נותר: {exposure_time*60 - i} שניות.**\n\n זכור: {script['prevention']}")
+            
+            # טיימר
+            total_seconds = exposure_time * 60
+            for i in range(total_seconds):
+                percent = (i + 1) / total_seconds
+                progress_bar.progress(percent)
+                status.info(f"⏳ זמן נותר: {total_seconds - i} שניות. הישאר עם הטקסט למעלה.")
                 time.sleep(1)
-            status.success("החשיפה הסתיימה.")
             
-            st.session_state.current_exposure = {"script": script['title'], "predicted": predicted_distress}
+            status.success("החשיפה הסתיימה!")
+            
+            # שמירת נתונים לזיכרון זמני כדי לאפשר דיווח
+            st.session_state.current_exposure = {
+                "script": script['title'], 
+                "predicted": predicted_distress
+            }
 
-        # שלב העיבוד (Post-Exposure)
+        # דיווח לאחר חשיפה
         if 'current_exposure' in st.session_state:
-            st.markdown("### שלב 2: עיבוד והפרת ציפיות")
-            actual_distress = st.slider("בפועל, כמה בלתי נסבל זה היה? (0-100)", 0, 100, 50, key="actual")
+            st.markdown("---")
+            st.markdown("### שלב 2: אחרי החשיפה")
+            actual_distress = st.slider("בפועל - כמה מצוקה הרגשת? (0-10)", 0, 10, 5, key="actual")
             
-            if st.button("סיים ותעד ביומן"):
-                learning_msg = calculate_learning(st.session_state.current_exposure['predicted'], actual_distress)
+            if st.button("סיים ושמור ביומן"):
+                # חישוב למידה
+                gap = st.session_state.current_exposure['predicted'] - actual_distress
+                conclusion = "לא הייתה הפתעה"
+                if gap > 0: conclusion = f"✨ למידה מעכבת חיובית! (פער של {gap} נקודות)"
+                elif gap < 0: conclusion = "⚠️ החרדה הייתה גבוהה מהמצופה"
+                
                 st.session_state.logs.append({
-                    "Date": datetime.now().strftime("%d/%m %H:%M"),
-                    "Script": st.session_state.current_exposure['script'],
-                    "Prediction": st.session_state.current_exposure['predicted'],
-                    "Reality": actual_distress,
-                    "Conclusion": learning_msg
+                    "תאריך": datetime.now().strftime("%d/%m %H:%M"),
+                    "תסריט": st.session_state.current_exposure['script'],
+                    "צפי (0-10)": st.session_state.current_exposure['predicted'],
+                    "בפועל (0-10)": actual_distress,
+                    "מסקנה": conclusion
                 })
-                st.info(learning_msg)
+                st.success("התרגול נשמר ביומן.")
+                del st.session_state.current_exposure
 
 # --- מצב 3: יומן ---
-elif mode == "📊 יומן מעקב ומסקנות":
+elif mode == "📊 יומן מעקב":
     if st.session_state.logs:
         df = pd.DataFrame(st.session_state.logs)
         st.table(df)
     else:
         st.info("עדיין אין נתונים. בצע חשיפה ראשונה.")
+
